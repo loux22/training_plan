@@ -34,6 +34,17 @@ class WentOutRepository extends ServiceEntityRepository
         ;
     }
 
+    public function findWentoutOrderByDateDesc($user)
+    {
+        return $this->createQueryBuilder('w')
+            ->andWhere('w.user = :val')
+            ->setParameter('val', $user)
+            ->orderBy('w.date', 'DESC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     public function findWeekOrderByDate($week)
     {
         return $this->createQueryBuilder('w')

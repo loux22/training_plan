@@ -175,6 +175,26 @@ class UserController extends AbstractController
         return $resultat;
     }
 
+    function remove_heures($heure1,$heure2){
+        $secondes1= $this -> heure_to_secondes($heure1);
+        $secondes2= $this -> heure_to_secondes($heure2);
+        $somme=$secondes1-$secondes2;
+        //transfo en h:i:s
+        $s=$somme % 60; //reste de la division en minutes => secondes
+        if($s < 10){
+            $s = intval('0') . $s;
+        }
+        $m1=($somme-$s) / 60; //minutes totales
+        $m=$m1 % 60;//reste de la division en heures => minutes
+        if($m < 10){
+            $m = intval('0') . $m;
+        }
+        $h=($m1-$m) / 60; //heures
+        $resultat=$h.":".$m.":".$s;
+        // dd(strtotime($resultat));
+        return $resultat;
+    }
+
     /**
      * @Route("/profil/enterWentOut", name="enterWentOut")
      */
@@ -257,5 +277,75 @@ class UserController extends AbstractController
         return $this->render('user/enterWentOut.html.twig', [
             "formWentOut" => $form->createView()
             ]);
+    }
+
+    /**
+     * @Route("/profil/lastEntrainment", name="lastEntrainment")
+     */
+    public function lastEntrainment()
+    {
+        if (!$this -> getUser()) {
+            return $this ->redirectToRoute('authentification');
+        }
+        $repoWeek = $this->getDoctrine()->getRepository(WentOut::class);
+        $wentOut = $repoWeek->findWentoutOrderByDateDesc($this -> getUser());
+        return $this->render('user/lastEntrainment.html.twig', [
+            "wentOut" => $wentOut
+            ]);
+    }
+
+     /**
+     * @Route("/profil/wentOutDelete/{id}", name="wentOutDelete")
+     */
+    public function wentOutDelete($id)
+    {
+        if (!$this -> getUser()) {
+            return $this ->redirectToRoute('authentification');
+        }
+        $manager = $this->getDoctrine()->getManager();
+        $repoWeek = $this->getDoctrine()->getRepository(WeekYears::class);
+        $repoWentOut = $this->getDoctrine()->getRepository(WentOut::class);
+        $wentOut = $repoWentOut -> findOneBy(["id" => $id]);
+        $week = $repoWeek -> findOneBy(["id" => $wentOut -> getWeek()]);
+        $week -> setDuration(date_create($this -> remove_heures($week -> getDuration()->format('H:i:s'), $wentOut -> getDuration()->format('H:i:s'))));
+        $week -> setkm($week -> getkm() - $wentOut -> getkm());
+        $manager->remove($wentOut);
+        $manager->persist($week);
+        $manager->flush();
+        $this->addFlash('success', "La sortie a été supprimé ");
+        return $this->redirectToRoute('lastEntrainment');
+    }
+
+    /**
+     * @Route("/profil/wentOutUpdate/{id}", name="wentOutUpdate")
+     */
+    public function wentOutUpdate($id, Request $request)
+    {
+        if (!$this -> getUser()) {
+            return $this ->redirectToRoute('authentification');
+        }
+        $manager = $this->getDoctrine()->getManager();
+        $repoWeek = $this->getDoctrine()->getRepository(WeekYears::class);
+        $repoWentOut = $this->getDoctrine()->getRepository(WentOut::class);
+        $wentOut = $repoWentOut -> findOneBy(["id" => $id]);
+        $week = $repoWeek -> findOneBy(["id" => $wentOut -> getWeek()]);
+        $week -> setDuration(date_create($this -> remove_heures($week -> getDuration()->format('H:i:s'), $wentOut -> getDuration()->format('H:i:s'))));
+        $week -> setkm($week -> getkm() - $wentOut -> getkm());
+
+        $form = $this->createForm(EnterWentOutType::class, $wentOut);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $week -> setDuration(date_create($this -> add_heures($week -> getDuration()->format('H:i:s'), $wentOut -> getDuration()->format('H:i:s'))));
+            $week -> setkm($week -> getkm() + $wentOut -> getkm());
+            $manager->persist($wentOut);
+            $manager->persist($week);
+            $manager->flush();
+            $this->addFlash('success', 'Votre sortie a été modifié');
+            return $this ->redirectToRoute('lastEntrainment');
+        }
+        return $this->render('user/updateEntrainment.html.twig', [
+            "formWentOut" => $form->createView()
+        ]);
     }
 }

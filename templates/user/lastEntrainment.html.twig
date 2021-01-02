@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dernier entrainement{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ asset('assets/css/profil.css') }}">
+{% endblock %}
+
+{% block body %}
+<div>
+{% for went in wentOut %}
+    <p><span>{{went.date.date|date("d/m/Y")}}</span> <span>{{went.duration.date|date("H:i:s")}} </span> 
+    <button type="submit"><a href="{{ path('wentOutDelete', {id: went.id}) }}">X</a></button>
+    <button type="submit"><a href="{{ path('wentOutUpdate', {id: went.id}) }}">modifier</a></button>
+    </p>
+    
+{% endfor %}
+</div>
+
+
+
+
+{% endblock %}
+
+
