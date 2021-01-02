@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Plan Entrainement - {% block title %}{% endblock %}</title>
+        <script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
+        {% block stylesheets %}{% endblock %}
+    </head>
+    <body>
+    {% if app.user %}
+            {% include "navbar.html.twig" %}
+        {% endif %}
+        
+        {% for message in app.flashes('success') %}
+        <div class="alert alert-success" style="background-color: rgb(5, 151, 0);">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('errors') %}
+        <div class="alert alert-danger" style="background-color: rgb(211, 2, 2);">{{ message}}</div>
+        {% endfor %}
+
+        
+        
+        {% block body %}{% endblock %}
+        {% block javascripts %}{% endblock %}
+    </body>
+    {% if app.user %}
+        <script>
+
+        document.querySelectorAll("li").forEach(element => 
+        element.addEventListener("click", () =>{
+        document.querySelectorAll("li").forEach(value => 
+            value.classList.remove("active")
+        )
+        element.classList.add("active")
+        })
+        )
+    </script>
+    {% endif %}
+    
+</html>

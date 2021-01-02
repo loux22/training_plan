@@ -1,0 +1,92 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}km{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ asset('assets/css/profil.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div style="display: none;">
+        {% for week in weekYears %}
+        <div class="weight-date">
+            <div class="date">{{week.date.date}}</div>
+            <div class="duration">{{week.duration.date}}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div id="chartdiv" style="width: 100%; height: 800px;"></div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://www.amcharts.com/lib/4/core.js"></script>
+<script src="https://www.amcharts.com/lib/4/charts.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/themes/dataviz.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+
+<script>
+        am4core.ready(function() {
+        
+        // Themes begin
+        am4core.useTheme(am4themes_dataviz);
+        am4core.useTheme(am4themes_animated);
+        // Themes end
+        
+        // Create chart instance
+        var chart = am4core.create("chartdiv", am4charts.XYChart);
+        
+        // Add data
+        chart.data = generateChartData();
+        
+        var dateAxis = chart.xAxes.push(new am4charts.DateAxis());    
+
+        var yAxis = chart.yAxes.push(new am4charts.DurationAxis());
+        yAxis.baseUnit = "second";
+        yAxis.title.text = "Duration";
+        yAxis.durationFormatter.durationFormat = "hh'h' mm'm'";
+
+        // Create series
+        var series = chart.series.push(new am4charts.ColumnSeries());
+        series.dataFields.valueY = "value";
+        series.dataFields.dateX = "date";
+        series.name = "Sales";
+        series.columns.template.tooltipText = "{dateX}: {valueY.formatDuration()}";
+        series.columns.template.fillOpacity = 0.7;
+        series.columns.template.propertyFields.strokeDasharray = "dashLength";
+        series.columns.template.propertyFields.fillOpacity = "alpha";
+        series.showOnInit = true;
+
+        // Create scrollbars
+        chart.scrollbarX = new am4charts.XYChartScrollbar();
+        chart.scrollbarX.series.push(series);
+
+        chart.scrollbarY = new am4core.Scrollbar();
+        chart.scrollbarY.parent = chart.leftAxesContainer;
+        chart.scrollbarY.toBack();
+        
+        // Add cursor
+        chart.cursor = new am4charts.XYCursor();
+        chart.cursor.xAxis = dateAxis;
+        chart.cursor.snapToSeries = series;
+        
+        function generateChartData() {
+            var chartData = [];
+            var bd = document.querySelectorAll(".weight-date")
+            var duration = bd[0].querySelector(".duration").innerHTML.split(' ')[1].split('.')[0].split(':')
+            var seconde = (parseInt(duration[0]) * 3600) + (parseInt(duration[1]) * 60) + parseInt(duration[2]);
+           
+            bd.forEach(function (element, i) {
+                var duration = element.querySelector(".duration").innerHTML.split(' ')[1].split('.')[0].split(':')
+                var seconde = (parseInt(duration[0]) * 3600) + (parseInt(duration[1]) * 60) + parseInt(duration[2]);
+                chartData.push({
+                    date: element.querySelector(".date").innerHTML.split(' ')[0],
+                    value: seconde
+                })
+            });
+            console.log(chartData)
+            return chartData;
+        }
+        
+        }); // end am4core.ready()
+        </script>
+{% endblock %}
